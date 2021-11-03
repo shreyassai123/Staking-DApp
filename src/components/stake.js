@@ -1,5 +1,6 @@
 import React from "react"
 import { RewardAbi, RewardAddress, StakeAbi, StakeAddress, MplRewardsAbi, MplRewardsAddress } from "../constants";
+
 const Web3 = require("web3");
 const web3 = new Web3("https://ropsten.infura.io/v3/7a83a1ed33ff4bedae09b00782de9a3f")
 
@@ -19,8 +20,6 @@ export default class StakeApp extends React.Component {
       this.handleSubmit = this.handleSubmit.bind(this);
       this.handleConnect = this.handleConnect.bind(this);
       this.handleGetReward = this.handleGetReward.bind(this);
-      
-      
     }
 
     ethEnabled = async () => {
@@ -43,7 +42,7 @@ export default class StakeApp extends React.Component {
             this.setState(state => ({rewBal: res}))
           }.bind(this))
           this.setState(state => ({test:'Test'}))
-          var StakeContract = new web3.eth.Contract(RewardAbi, RewardAddress)
+          var StakeContract = new web3.eth.Contract(StakeAbi, StakeAddress)
         StakeContract.methods.balanceOf(accounts[0]).call(function (err, res) {
           if (err) {
             console.log("An error occured", err)
@@ -119,13 +118,13 @@ export default class StakeApp extends React.Component {
               console.log("An error occured", err)
               return
             }
-          }.bind(this))
+          })
     }
 
    async handleConnect(e){
         var check = await this.ethEnabled()
         if(!check){ 
-            alert('Metaask not installed')
+            alert('Metamask not installed')
 
         } else {
             this.updateData()
@@ -137,15 +136,33 @@ export default class StakeApp extends React.Component {
       this.setState({ text: e.target.value });
     }
   
-    handleSubmit(e) {
+    async handleSubmit(e) {
         var MplRewardsContract = new web3.eth.Contract(MplRewardsAbi, MplRewardsAddress)
-        MplRewardsContract.methods.stake(this.state.text).call(function (err, res) {
-            if (err) {
-              console.log("An error occured", err)
-              return
-            }
-            console.log('STUFF '+ res)
-          }.bind(this))
+        // MplRewardsContract.methods.stake(this.state.text).call(function (err, res) {
+        //     if (err) {
+        //       console.log("An error occured", err)
+        //       return
+        //     }
+        //   })
+          var accounts = await window.web3.eth.getAccounts()
+          window.ethereum
+    .request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: accounts[0],
+          to: MplRewardsAddress,
+          value: '0x00',
+          gasPrice: '0x09184e72a000',
+          gas: '0x2710',
+          data: MplRewardsContract.methods
+      .stake(this.state.text)
+      .encodeABI(),
+        },
+      ],
+    })
+    .then((txHash) => console.log(txHash))
+    .catch((error) => console.error);
     }
   }
   
